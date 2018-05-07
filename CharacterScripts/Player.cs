@@ -50,8 +50,10 @@ public class Player : Character {
             Flip();
         }
 
-        HandleSliding();
-
+        if (facingRight && Input.GetAxisRaw("Horizontal") > 0 || !facingRight && Input.GetAxisRaw("Horizontal") < 0)
+        {
+            HandleSliding();
+        }
 
         if (moveVel != 0)
         {
@@ -188,18 +190,13 @@ public class Player : Character {
 
     void HandleSliding()
     {
-        if (facingRight && Input.GetAxisRaw("Horizontal") > 0 || !facingRight && Input.GetAxisRaw("Horizontal") < 0)
-        {
+        
             if (isWalled && !isGrounded)
             {
                 Flip();
                 locked = true;
 
             }
-        }
-        
-        else if (facingRight && Input.GetAxisRaw("Horizontal") < 0 || !facingRight && Input.GetAxisRaw("Horizontal") > 0)
-        {
             if (isSliding && !isGrounded)
             {
                 anim.SetBool("Cling", true);
@@ -207,7 +204,12 @@ public class Player : Character {
                 locked = true;
 
             }
-        }
+        
+        
+        /*if (facingRight && Input.GetAxisRaw("Horizontal") < 0 || !facingRight && Input.GetAxisRaw("Horizontal") > 0)
+        {
+            
+        }*/
         
         else
         {
