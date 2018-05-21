@@ -15,6 +15,7 @@ public class Crab : Mob {
 
         base.Start();
 
+
     }
 
 

@@ -7,6 +7,7 @@ public class ShootScript : MonoBehaviour {
     public float velX;
     public float velY;
     public bool friendly;
+    public float damage;
     private Rigidbody2D rb2d;
     private Animator anim;
     

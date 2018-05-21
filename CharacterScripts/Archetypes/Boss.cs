@@ -4,13 +4,15 @@ using UnityEngine;
 
 public class Boss : Baddie{
 
-	// Use this for initialization
-	public override void Start () {
+    [SerializeField] protected int bossNo;
+
+
+    public override void Start()
+    {
 
         base.Start();
-        anim.SetInteger("BossNo", bossNo);
 
-
+        bossNo = int.Parse(Find_id(nameof).bossno);
     }
 	
 	// Update is called once per frame

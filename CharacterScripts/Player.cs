@@ -4,13 +4,22 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-public class Player : Character {    
+public class Player : Character {
 
-    protected float jumpHeight;
-    public bool isWalled, isSliding, onLadder = false;
-    private bool jumping, crouching, walljumping, wallsliding, locked;
-    private float moveVel, climbSpd, climbVel, gravityStore, delay = 3;
-    private int numLives;
+    [SerializeField] public int playerNo;
+
+    protected float jumpHeight, nextRoll;
+
+    public bool     isWalled, isSliding, onLadder = false;
+
+    public bool     jumping, crouching, walljumping, wallsliding, rolling, shooting, locked;
+
+    private float   moveVel, climbSpd, climbVel, 
+                    gravityStore;
+
+    public int      numLives;
+
+    protected SpriteRenderer sprite;
 
     public AudioClip spawn;
     [SerializeField] protected Transform wallCheck, slideCheck;
@@ -23,7 +32,11 @@ public class Player : Character {
         nameof = "Player1";
        
         base.Start();
+
+        playerNo = int.Parse(Find_id(nameof).playerno);
         anim.SetInteger("PlayerNo", playerNo);
+
+        sprite = GetComponent<SpriteRenderer>();
 
         facingRight = true;
         locked = false;
@@ -41,81 +54,12 @@ public class Player : Character {
     }
 
 	void Update () {
-               
-            moveVel = moveSpeed * Input.GetAxisRaw("Horizontal");
-            climbVel = climbSpd * Input.GetAxisRaw("Vertical");
-
-        if ((facingRight && Input.GetAxisRaw("Horizontal") < 0 || (!facingRight && Input.GetAxisRaw("Horizontal") > 0)) && !locked)             
-        {            
-            Flip();
-        }
-
-        if (facingRight && Input.GetAxisRaw("Horizontal") > 0 || !facingRight && Input.GetAxisRaw("Horizontal") < 0)
-        {
-            HandleSliding();
-        }
-
-        if (moveVel != 0)
-        {
-            anim.SetBool("Run", true);
-            
-        } else anim.SetBool("Run", false);
-
-        if (isGrounded || !isSliding)
-        {
-            anim.SetBool("Cling", false);
-            locked = false;
-
-        }
-
-
-        if (Input.GetAxis("Vertical") < 0 && isGrounded)
-        {
-            anim.SetBool("Crouch", true);
-
-        } else anim.SetBool("Crouch", false);
         
+        HandleStates();
 
-        if (Input.GetButtonDown("Jump") && (isGrounded || wallsliding))
-        {
-            sound.PlayOneShot(jump, 0.24f);
-            anim.SetTrigger("Jump");
+        HandleMovement();
 
-            if (wallsliding)
-            {
-                walljumping = true;
-
-            } else jumping = true;
-
-        }        
-        // if walled and moving into wall flip and start sliding
-        // if sliding and moving into wall keep sliding, if not, fall
-
-        if (Input.GetButtonDown("Fire1"))
-        {
-            sound.PlayOneShot(shoot, 0.24f);
-
-            if (Time.time > nextFire)
-            {
-                nextFire = Time.time + fireRate1;
-
-                if(anim.GetBool("Crouch"))
-                {
-                    Fire(aimLow);
-
-                } else Fire(aim);
-            } 
-        } 
-
-        if (Input.GetButton("Fire1"))
-        {
-            anim.SetBool("Shoot", true);
-
-        } else anim.SetBool("Shoot", false);
-
-        
-
-        
+        HandleAttack();
         
     }
 
@@ -125,150 +69,245 @@ public class Player : Character {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, whatIsGround);
         isWalled = Physics2D.OverlapCircle(wallCheck.position, groundCheckRadius, whatIsGround);
         isSliding = Physics2D.OverlapCircle(slideCheck.position, groundCheckRadius, whatIsGround);
+        
 
         if (jumping)
         {
-
-
-            rb2d.velocity = new Vector2(rb2d.velocity.x, jumpHeight);
-
-            Invoke("MovementRestore", 0.1f);
-
+            sound.PlayOneShot(jump, 0.24f);
+            StartCoroutine(Jump(0.1f));
         }
         else if (walljumping)
+        {           
+            StartCoroutine(WallJump(0.2f));
+        }
+        else if (crouching)
         {
-
-
-            if (facingRight)
-            {
-                
-                rb2d.velocity = new Vector2(jumpHeight / 2, jumpHeight);
-                
-            }
-            else
-            {
-                
-                rb2d.velocity = new Vector2(jumpHeight / -2, jumpHeight);
-                
-            }
             
-            locked = true;
-
-            Invoke("MovementRestore", 0.2f);
-
+            if (rolling)
+            {
+                StartCoroutine(Roll(0.333f));
+            } else rb2d.velocity = new Vector2(0, rb2d.velocity.y); 
         }
-        else if (anim.GetBool("Crouch"))
-        {
-            rb2d.velocity = new Vector2(0, rb2d.velocity.y);
-
-        }
+        
         else if (onLadder)
         {
             rb2d.gravityScale = 0f;
-
             rb2d.velocity = new Vector2(moveVel, climbVel);
-
-        } else if (wallsliding)
-        {
-            rb2d.velocity = new Vector2(rb2d.velocity.x, moveSpeed / -2);
         }
+        else if (wallsliding)
+        {
+            locked = true;
+
+            rb2d.velocity = new Vector2(rb2d.velocity.x, moveSpeed / -2);
+            if(!isSliding)
+            {
+                locked = false;
+                rb2d.velocity = new Vector2(moveVel, rb2d.velocity.y);
+            }
+        }
+        
         else
         {
             rb2d.velocity = new Vector2(moveVel, rb2d.velocity.y);
             rb2d.gravityScale = gravityStore;
+            
         }
                 
     }
-    
-    void MovementRestore()
+        
+    protected void HandleStates()
     {
-        jumping = false;
-        walljumping = false;
-        wallsliding = false;
-        locked = false;
+        moveVel = moveSpeed * Input.GetAxisRaw("Horizontal");
+        climbVel = climbSpd * Input.GetAxisRaw("Vertical");
+
+        anim.SetInteger("Hori", (int)(Input.GetAxisRaw("Horizontal") * 10 + rb2d.velocity.x));
+        anim.SetInteger("Vert", (int)Input.GetAxisRaw("Vertical") * 10);
+        if (isGrounded)
+        {
+            anim.SetBool("Grounded", true);
+        }
+        else
+        {
+            anim.SetBool("Grounded", false);
+        }
+        if (isSliding)
+        {
+            anim.SetBool("Sliding", true);
+        }
+        else
+        {
+            anim.SetBool("Sliding", false);
+        }
+
+        if (shooting)
+        {
+            anim.SetBool("Shoot", true);
+        }
+        else
+        {
+            anim.SetBool("Shoot", false);
+        }
     }
 
-    void HandleSliding()
+    protected void HandleMovement()
     {
-        
+        if (facingRight && Input.GetAxisRaw("Horizontal") < 0 || !facingRight && Input.GetAxisRaw("Horizontal") > 0) 
+        {
+            if(!locked)
+            {
+                Flip();
+            }     
+            if (isSliding)
+            {
+                
+                wallsliding = true;
+            }
+        }
+        if (facingRight && Input.GetAxisRaw("Horizontal") > 0 || !facingRight && Input.GetAxisRaw("Horizontal") < 0)
+        {            
             if (isWalled && !isGrounded)
             {
                 Flip();
                 locked = true;
 
-            }
-            if (isSliding && !isGrounded)
-            {
-                anim.SetBool("Cling", true);
-                wallsliding = true;
-                locked = true;
-
-            }
-        
-        
-        /*if (facingRight && Input.GetAxisRaw("Horizontal") < 0 || !facingRight && Input.GetAxisRaw("Horizontal") > 0)
+            } 
+        }
+        if (Input.GetAxisRaw("Horizontal") == 0)
         {
-            
-        }*/
-        
+            if (isSliding)
+            {
+                locked = false;
+                wallsliding = false;
+            }
+
+        }
+
+        if (Input.GetAxis("Vertical") < 0 && isGrounded)
+        {
+            crouching = true;
+
+            if (Input.GetAxisRaw("Horizontal") != 0)
+            {
+                rolling = true;
+            }                        
+        }
         else
         {
-            anim.SetBool("Cling", false);
-            wallsliding = false;
+            crouching = false;
+        }
+
+        if (Input.GetButtonDown("Jump") && (isGrounded || wallsliding))
+        {
+            if (wallsliding)
+            {
+                walljumping = true;
+            }
+            else
+            {
+                jumping = true;
+            }            
+        }
+    }
+
+    protected void HandleAttack()
+    {
+        if (Input.GetButton("Fire1"))
+        {
+            shooting = true;
+            StartCoroutine(Shoot(fireRate1));
+        } else
+        {
+            shooting = false;
+        }
+        
+    }
+
+    IEnumerator Jump(float cd)
+    {
+        locked = true;
+        rb2d.velocity = new Vector2(rb2d.velocity.x, jumpHeight);
+      
+        
+        yield return new WaitForSecondsRealtime(cd);
+
+        jumping = false;
+        locked = false;
+        
+    }
+
+    IEnumerator Roll(float cd)
+    {
+        
+        
+
+        if (Time.time > nextRoll)
+        {
+            locked = true;
+            nextFire = Time.time + cd;
+            if (facingRight)
+            {
+                rb2d.velocity = new Vector2(moveSpeed * 2, 0);
+            }
+            if (!facingRight)
+            {
+                rb2d.velocity = new Vector2(moveSpeed * -2, 0);
+            }
+
+            yield return new WaitForSeconds(cd);
+
+            nextRoll = Time.time + (cd/2);
+
             locked = false;
-        }
 
-    }
-    void OnCollisionEnter2D(Collision2D other)
-    {
-        if (other.gameObject.CompareTag("Enemy"))
+        } else
         {
             
-
-            if (health1 <= 20)
-            {
-                sound.PlayOneShot(death, 0.24f);
-                anim.SetTrigger("Hit");
-                health1 -= 20;
-                Die();
-            }
-
-            else
-            {
-                sound.PlayOneShot(hit, 0.24f);
-                anim.SetTrigger("Hit");
-                health1 -= 20;
-            }
         }
-        else if (other.gameObject.CompareTag("Heart"))
-        {
-            if (health1 >= 60)
-            {
-                health1 = 100;
-            }
-            else
-            {
-                health1 += 40;
-            }
-        }
+
+        rolling = false;
+        
+
     }
-    
-    void Die()
-    {
-        if (numLives == 1)
-        {
-            numLives--;
-            Lives.numLives = 0;
-            SceneManager.LoadScene("Game Over");
 
+    IEnumerator WallJump (float cd)
+    {
+        locked = true;
+
+        if (facingRight)
+        {
+            rb2d.velocity = new Vector2(jumpHeight / 2, jumpHeight / 2);
         }
         else
         {
-            numLives--;
-            health1 = 100;
-            Lives.numLives--; ;
+            rb2d.velocity = new Vector2(jumpHeight / -2, jumpHeight / 2);
         }
+
+        yield return new WaitForSeconds(cd);
+
+        wallsliding = false;
+        walljumping = false;
+        locked = false;
     }
+
+    IEnumerator Shoot (float cd)
+    {
+        
+        if (Time.time > nextFire)
+        {
+            nextFire = Time.time + fireRate1;
+
+            if (anim.GetInteger("Vert") < 0)
+            {
+                Fire(aimLow);
+
+            }
+            else Fire(aim);
+            sound.PlayOneShot(shoot, 0.24f);
+        }
+        yield return new WaitForSeconds(cd);
+        
+    }
+        
 }
 
 

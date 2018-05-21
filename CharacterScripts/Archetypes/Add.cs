@@ -4,15 +4,15 @@ using UnityEngine;
 
 public class Add : Baddie
 {
+    [SerializeField] protected int addNo;
 
-    // Use this for initialization
+
     public override void Start()
     {
 
         base.Start();
-        anim.SetInteger("AddNo", addNo);
 
-
+        addNo = int.Parse(Find_id(nameof).addno);
     }
 
     // Update is called once per frame

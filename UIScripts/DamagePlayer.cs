@@ -16,7 +16,7 @@ public class DamagePlayer : MonoBehaviour {
 
     void OnCollisionEnter(Collision other)
     {
-        other.gameObject.GetComponent<PlayerHealth>().currentHealth -= damageToGive;
+        other.gameObject.GetComponent<PlayerHealth>().CurrentHealth -= damageToGive;
     }
     public class Row
     {

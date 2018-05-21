@@ -26,10 +26,7 @@ public class BuddhaHead : Boss {
         Patrol();
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        Fire();
-    }
+    
     void Fire()
     {
         

@@ -4,12 +4,16 @@ using UnityEngine;
 
 public class Mob : Baddie
 {
+    [SerializeField] protected int mobNo;
+    
 
-    // Use this for initialization
     public override void Start()
     {
 
         base.Start();
+
+        mobNo = int.Parse(Find_id(nameof).mobno);
+
         anim.SetInteger("MobNo", mobNo);
 
 

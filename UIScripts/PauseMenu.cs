@@ -21,22 +21,22 @@ public class PauseMenu : MonoBehaviour {
             pauseMenuCanvas.SetActive(false);
             Time.timeScale = 1f;
         }
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetButtonDown("Cancel"))
         {
             isPaused = !isPaused;
         }
 		
 	}
 
-    public void resume()
+    public void Resume()
     {
         isPaused = false;
 
     }
 
-    public void quit()
+    public void Quit()
     {
-        SceneManager.LoadScene(mainMenu);
+        SceneManager.LoadScene(2);
         
     }
 }

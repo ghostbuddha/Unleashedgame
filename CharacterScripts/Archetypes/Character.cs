@@ -5,10 +5,9 @@ using UnityEngine;
 public abstract class Character : MonoBehaviour {
 
     public TextAsset file;
+
     protected string nameof;
-
-    [SerializeField] public int bossNo, addNo, mobNo, playerNo;
-
+        
     public float health1, health2;
 
     protected float moveSpeed, moveForce;
@@ -40,14 +39,11 @@ public abstract class Character : MonoBehaviour {
         rb2d = GetComponent<Rigidbody2D>();
         sound = GetComponent<AudioSource>();
 
-        //PlayerPrefs.GetFloat("SliderVolumeLevel", sound.volume);
+        PlayerPrefs.GetFloat("SliderVolumeLevel", sound.volume);
 
         Debug.Log(Find_id(nameof).id);
 
-        playerNo = int.Parse(Find_id(nameof).playerno);
-        bossNo = int.Parse(Find_id(nameof).bossno);
-        addNo = int.Parse(Find_id(nameof).addno);
-        mobNo = int.Parse(Find_id(nameof).mobno);
+        
 
         health1 = float.Parse(Find_id(nameof).health1);
         health2 = float.Parse(Find_id(nameof).health2);
@@ -70,24 +66,25 @@ public abstract class Character : MonoBehaviour {
     }
     protected void Fire(Vector2 aim)
     {
-        int a = 1;
+        
         projPos = transform.position;
 
-        while (a != 0)
+        
+        if (facingRight)
         {
-            if (facingRight)
-            {
-                projPos += aim;
-                Instantiate(projectileRight, projPos, Quaternion.identity);
-            }
-            else
-            {
-                projPos += new Vector2(aim.x * -1, aim.y);
-                Instantiate(projectileLeft, projPos, Quaternion.identity);
-            }
-            a--;
+            projPos += aim;
+            Instantiate(projectileRight, projPos, Quaternion.identity);
         }
+        else
+        {
+            projPos += new Vector2(aim.x * -1, aim.y);
+            Instantiate(projectileLeft, projPos, Quaternion.identity);
+        }
+            
+        
     }
+
+    
 
     /// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// 

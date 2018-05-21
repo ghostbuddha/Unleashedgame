@@ -6,6 +6,7 @@ public abstract class Baddie : Character
 {
     [SerializeField] protected Transform edgeCheck;
     [SerializeField] protected bool isEdged;
+    public float collisionDamage = 20;
 
     public override void Start()
     {
@@ -24,9 +25,9 @@ public abstract class Baddie : Character
             if (health1 <= 0)
             {
                 anim.SetTrigger("Die");
-                sound.PlayOneShot(death, 1f);                
+                sound.PlayOneShot(death, .5f);                
                 Invoke("Pop", .5f);
-            } else sound.PlayOneShot(hit, 1f);
+            } else sound.PlayOneShot(hit, .5f);
         }
         else
         {
