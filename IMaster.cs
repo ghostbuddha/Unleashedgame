@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Player, Enemies (Mob, Add, Boss), Destructible Walls
+// Items (Health, 1-Up, Ammo, Karma), Stage (Doors, Trapdoors)
+// NPCs (Friendly, Unfriendly), Signs
+// Menus (Main, Pause, Dialogue, Game Over)
+// Scenes (Intro, Inactive Start Menu, Cutscene)
 
 public interface IPlayable {
 
